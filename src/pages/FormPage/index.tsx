@@ -1,5 +1,5 @@
 import { StyledBody, StyledButton, StyledFieldset, StyledForm } from "./style";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TFormSchema, formSchema } from "./formSchema";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -18,6 +18,7 @@ import { fetchData } from "../../services/api";
 import { StyledLabel } from "../../components/Input/style";
 import togOn from "../../assets/toggleOn.svg";
 import togOff from "../../assets/toggleOff.svg";
+import { backEndNormalizeData } from "../../utils/formFactory/normalize";
 
 function FormPage() {
     const [isTypePassword, setIsTypePassword] = useState(true);
@@ -27,44 +28,30 @@ function FormPage() {
         register,
         handleSubmit,
         formState: { errors },
+        setValue,
     } = useForm<TFormSchema>({
         resolver: zodResolver(formSchema),
         mode: "all",
     });
 
-    const onSubmit: SubmitHandler<TFormSchema> = (data: IFormData) => {
-        // data.birthdate = data.birthdate.replace("/", "").replace("/", "");
-        // data.phoneNumber = data.phoneNumber
-        //     .replace("(", "")
-        //     .replace(")", "")
-        //     .replace("-", "");
-        // data.documentNumber = data.documentNumber
-        //     .replace(".", "")
-        //     .replace(".", "")
-        //     .replace("-", "");
-        // const newMinimumWage = Number(
-        //     data.minimumWage.replace("R$", "")
-        // ).toFixed(2);
-        // const newObject = {
-        //     ...data,
-        //     zipcode: inputValue,
-        //     minimumWage: newMinimumWage,
-        // };
-        // delete newObject.confirmPassword;
-
-        alert(JSON.stringify(data));
-    };
-
-    const { data, error, isLoading } = useQuery<ICepResponse | void>({
+    const { data, isLoading } = useQuery<ICepResponse | void>({
         queryKey: ["cepNumber", inputValue],
         queryFn: async () => {
             return await fetchData(inputValue);
         },
     });
 
-    if (error instanceof Error) {
-        console.log(error);
-    }
+    useEffect(() => {
+        if (data?.logradouro) {
+            setValue("addressDistrict", data.bairro);
+            setValue("addressStreet", data.logradouro);
+        }
+    }, [data?.logradouro]);
+
+    const onSubmit: SubmitHandler<TFormSchema> = (formData: IFormData) => {
+        const dataToBackEnd = backEndNormalizeData(formData);
+        alert(JSON.stringify(dataToBackEnd));
+    };
 
     return (
         <StyledBody>
@@ -117,6 +104,7 @@ function FormPage() {
                         const inputFormatted = e.target.value.replace("-", "");
                         setInputValue(inputFormatted);
                     }}
+                    placeholder="99999-999"
                 />
                 <Select
                     label="Estado"
@@ -186,6 +174,7 @@ function FormPage() {
                         const { value } = e.target;
                         e.target.value = normalizeMinimumWage(value);
                     }}
+                    placeholder="R$"
                 />
                 <StyledFieldset>
                     <StyledLabel htmlFor="educationLevel">

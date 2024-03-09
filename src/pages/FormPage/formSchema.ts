@@ -54,9 +54,9 @@ export const formSchema = z
             .string()
             .min(1, "Você precisa escolher pelo menos uma opção."),
         city: z.string().min(1, "Você precisa escolher pelo menos uma opção."),
-        addressDistrict: z.string(),
+        addressDistrict: z.string().min(1, "Preenchimento obrigatório"),
         addressComplement: z.string().nullable(),
-        addressStreet: z.string(),
+        addressStreet: z.string().min(1, "Preenchimento obrigatório"),
         educationLevel: z
             .string()
             .min(1, "Por favor selecione pelo uma opção de escolaridade"),
